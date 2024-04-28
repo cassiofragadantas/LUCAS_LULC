@@ -184,9 +184,6 @@ for epoch in range(epochs):
         #DOMAIN LABEL FOR INV EMBEDDING IS 2
         inv_dom_labels = np.ones_like(spec_dc_dom_labels) * 2
 
-        #dom_mix_labels = np.concatenate([inv_dom_labels, spec_dc_dom_labels, spec_dc_dom_labels],axis=0)
-        #joint_embedding = torch.concat([inv_emb, spec_emb_d, spec_emb_dc])
-
         dom_mix_labels = np.concatenate([inv_dom_labels, spec_dc_dom_labels],axis=0)
         
         joint_embedding = torch.concat([inv_emb, spec_emb_d])
@@ -196,8 +193,8 @@ for epoch in range(epochs):
         mixdl_loss_supContraLoss_n1 = sim_dist_specifc_loss_spc(joint_embedding_n1, y_mix_labels, dom_mix_labels, scl, epoch)
 
         joint_embedding_fc_feat = torch.concat([inv_fc_feat, spec_fc_feat])
-        # mixdl_loss_supContraLoss_fc = sim_dist_specifc_loss_spc(joint_embedding_fc_feat, y_mix_labels, dom_mix_labels, scl, epoch)
-        mixdl_loss_supContraLoss_fc = sup_contra_Cplus2_classes(joint_embedding_fc_feat, y_mix_labels, dom_mix_labels, scl, epoch)
+        mixdl_loss_supContraLoss_fc = sim_dist_specifc_loss_spc(joint_embedding_fc_feat, y_mix_labels, dom_mix_labels, scl, epoch)
+        # mixdl_loss_supContraLoss_fc = sup_contra_Cplus2_classes(joint_embedding_fc_feat, y_mix_labels, dom_mix_labels, scl, epoch)
         
         contra_loss = mixdl_loss_supContraLoss_fc #+ mixdl_loss_supContraLoss_n1 + mixdl_loss_supContraLoss 
 
