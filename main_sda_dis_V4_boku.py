@@ -1,11 +1,3 @@
-# TODO:
-# - OK Remove NaN columns (see climate and lu1 features)
-# - OK Normalize data per feature
-# - OK Change model to MLP
-# - In the losses, remove the intermediate contrastive losses
-# - OK Remove validation dataset (added a flag use_valid=False)
-
-### To implemente the Transformer Framework I used the code from this website : https://www.kaggle.com/code/arunmohan003/transformer-from-scratch-using-pytorch
 import torch
 import torch.nn as nn
 import sys
