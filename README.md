@@ -24,9 +24,9 @@ See results summary [here](https://docs.google.com/spreadsheets/d/168OG9ZMvTzcGD
 
 Main scripts:
 
-- `main_RF.py`: experiments on a chosen nomenclature level (1 or 2) and a chosen data type ('prime' or 'gapfill') with a RandomForest classifier. Launching example for level 1, random seed 0 and prime data: `$python main_combined_RF.py 1 0 prime` (or use the launch_RF.sh file)
-- `main_MLP.py`: same as main_RF but with an MLP (Multi-Layer Perceptron) classifier.
-- `main_MLP_Dis.py`: MLP classifier + feature disentanglement approach.
+- `main_RF.py`: experiments on a chosen nomenclature level (1 or 2) and a chosen data type ('prime' or 'gapfill') with a RandomForest classifier. Launching example for level 1, random seed 0 and prime data: `$python main_RF.py 1 0 prime` (or use the launch_RF.sh file)
+- `main_MLP.py`: same as main_RF but with an MLP (Multi-Layer Perceptron) classifier. Launching example with the additional (last) input argument being the number of training epochs: `$python main_MLP.py 1 0 prime 300`
+- `main_MLP_Dis.py`: MLP classifier + feature disentanglement approach. Input arguments are the same as in `main_MLP.py`.
 
 Shell scripts (launching experiments):
 

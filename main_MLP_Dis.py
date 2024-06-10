@@ -14,15 +14,6 @@ import torch.nn.functional as F
 #torch.set_default_dtype(torch.float16)
 
 
-
-def Entropy(input_):
-    bs = input_.size(0)
-    epsilon = 1e-5
-    entropy = -input_ * torch.log(input_ + epsilon)
-    entropy = torch.sum(entropy, dim=1)
-    return entropy
-
-
 # 3C classes (C per domain + C for domain invariant)
 def sim_dist_specifc_loss_spc(spec_emb, ohe_label, ohe_dom, scl, epoch):
     norm_spec_emb = nn.functional.normalize(spec_emb)
@@ -60,7 +51,7 @@ normalize_features = True
 use_valid = False # use validation dataset
 momentum_ema = .95
 data_path = '../LU22_final_shared/'
-model_name = "model_sda_dis_climate_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+model_name = "model_MLP_Dis_climate_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)

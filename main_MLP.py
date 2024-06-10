@@ -30,7 +30,7 @@ normalize_features = True
 use_valid = False # use validation dataset
 momentum_ema = .95
 data_path = '../LU22_final_shared/'
-model_name = "model_MLP_combined_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+model_name = "model_MLP_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)

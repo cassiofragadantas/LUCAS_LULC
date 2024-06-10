@@ -16,7 +16,7 @@ rng_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
 # gapfill: all samples but cloud free features only
 suffix = sys.argv[3] if len(sys.argv) > 3 else 'prime' #'prime' or 'gapfill'
 data_path = '../LU22_final_shared/'
-model_name = "model_RF_combined_" + suffix + '_Lev' + str(pred_level) + '_seed' + str(rng_seed) + '.pth'
+model_name = "model_RF_" + suffix + '_Lev' + str(pred_level) + '_seed' + str(rng_seed) + '.pth'
 normalize_features = True
 
 print(f'(Random seed set to {rng_seed})')
