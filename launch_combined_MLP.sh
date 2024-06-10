@@ -5,7 +5,7 @@ do
 	do  
         	for SEED in 0
         	do  
-            		python main_combined_MLP.py $LEVEL $SEED $DATA $EPOCHS > logMLP_${DATA}_Lev${LEVEL}_${EPOCHS}ep_seed${SEED}
+            		python main_MLP.py $LEVEL $SEED $DATA $EPOCHS > logMLP_${DATA}_Lev${LEVEL}_${EPOCHS}ep_seed${SEED}
         	done
 	done
 done

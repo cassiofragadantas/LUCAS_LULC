@@ -4,7 +4,7 @@ do
 	do  
         	for SEED in 0
         	do  
-            		python main_combined_RF.py $LEVEL $SEED $DATA > logRF_${DATA}_Lev${LEVEL}_seed${SEED}
+            		python main_RF.py $LEVEL $SEED $DATA > logRF_${DATA}_Lev${LEVEL}_seed${SEED}
         	done
 	done
 done
