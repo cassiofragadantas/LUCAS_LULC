@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.autograd import Function
 import numpy as np
 import pandas as pd
 import os
@@ -101,6 +102,30 @@ def evaluation(model, dataloader, device):
         tot_labels = np.concatenate(tot_labels)
     
     return tot_pred, tot_labels
+
+# Supervised contrastive classes definition
+
+# 3C classes (C per domain + C for domain invariant)
+def sim_dist_specifc_loss_spc(spec_emb, ohe_label, ohe_dom, scl, epoch):
+    norm_spec_emb = nn.functional.normalize(spec_emb)
+    hash_label = {}
+    new_combined_label = []
+    for v1, v2 in zip(ohe_label, ohe_dom):
+        key = "%d_%d"%(v1,v2)
+        if key not in hash_label:
+            hash_label[key] = len(hash_label)
+        new_combined_label.append( hash_label[key] )
+    new_combined_label = torch.tensor(np.array(new_combined_label), dtype=torch.int64)
+    return scl(norm_spec_emb, new_combined_label, epoch=epoch)
+
+# C + 2 classes: C for domain invariant + source domain spec + target domain spec
+def sup_contra_Cplus2_classes(emb, ohe_label, ohe_dom, scl, epoch):
+    norm_emb = nn.functional.normalize(emb)
+    C = ohe_label.max() + 1
+    new_combined_label = [v1 if v2==2 else C+v2 for v1, v2 in zip(ohe_label, ohe_dom)]
+    new_combined_label = torch.tensor(np.array(new_combined_label), dtype=torch.int64)
+    return scl(norm_emb, new_combined_label, epoch=epoch)
+
 
 class SupervisedContrastiveLoss(nn.Module):
     def __init__(self, temperature=0.07, min_tau=.07, max_tau=1., t_period=50, eps=1e-7):
@@ -212,3 +237,117 @@ class MLP(nn.Module):
         hidden_emb = self.layer2(emb) # OR: hidden_emb = emb
         out_emb = self.layer3(hidden_emb)
         return self.clf(out_emb), emb, hidden_emb, out_emb # No more intermediate features
+
+
+###########################################
+# Code associated to DANN implementation
+###########################################
+
+class GradReverse(Function):
+    @staticmethod
+    def forward(ctx, x, alpha=1.):
+        ctx.alpha = alpha
+        return x.view_as(x)
+        #print(alpha)
+    @staticmethod
+    def backward(ctx, grad_output):
+        output = grad_output * -ctx.alpha
+        return output, None
+
+def grad_reverse(x,alpha=1.):
+    return GradReverse.apply(x,alpha)
+
+
+class MLPDisentangleDANN(torch.nn.Module):
+    def __init__(self, num_classes=8, discr_nb_hidden=0):
+        super(MLPDisentangleDANN, self).__init__()
+
+        self.inv = MLPenc()
+        self.clf_task = FC_Classifier(num_classes=num_classes)
+        self.spec = MLPenc()
+        self.clf_dom = FC_Classifier(num_classes=2)
+        self.discr = FC_Classifier(num_classes=2,num_hidden_layers=discr_nb_hidden)
+
+    def forward(self, x):
+        inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
+        classif = self.clf_task(inv_fc_feat)
+        spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
+        classif_spec = self.clf_dom(spec_fc_feat)
+        classif_discr = self.discr(grad_reverse(inv_fc_feat))
+        return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, classif_discr
+
+class MLPDANN(torch.nn.Module):
+    def __init__(self, num_classes=8, discr_nb_hidden=2):
+        super(MLPDANN, self).__init__()
+
+        self.enc = MLPenc()
+        self.clf = FC_Classifier(num_classes=num_classes)
+        self.discr = FC_Classifier(num_classes=2, num_hidden_layers=discr_nb_hidden)
+
+    def forward(self, x):
+        _, _, out_emb = self.enc(x)
+        classif = self.clf(out_emb)
+        classif_discr = self.discr(grad_reverse(out_emb))
+        return classif, classif_discr
+
+
+class MLPenc(nn.Module):
+    def __init__(self, hidden_dim=256, dropout_rate=0.5):
+        super(MLPenc, self).__init__()
+            
+        self.flatten = nn.Flatten()
+        self.layer1 = nn.Sequential(
+            nn.LazyLinear(hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate)
+        )
+
+        self.layer2 = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate)
+        )
+
+        self.layer3 = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate)
+        )
+
+
+    def forward(self, inputs):
+        inputs = self.flatten(inputs)
+        emb = self.layer1(inputs)
+        hidden_emb = self.layer2(emb) # OR: hidden_emb = emb
+        out_emb = self.layer3(hidden_emb)
+        return emb, hidden_emb, out_emb # No more intermediate features
+
+
+class FC_Classifier(torch.nn.Module):
+    def __init__(self, num_classes, num_hidden_layers=0, hidden_dim=256, drop_prob=0.5):
+        super(FC_Classifier, self).__init__()
+
+        # Hidden layers (if any)
+        self.hidden_layers = nn.ModuleList()
+        for _ in range(num_hidden_layers):
+            self.hidden_layers.append(
+                nn.Sequential(
+                    nn.LazyLinear(hidden_dim),
+                    nn.BatchNorm1d(hidden_dim),
+                    nn.ReLU(),
+                    nn.Dropout(p=drop_prob)
+                )                
+            )
+        
+
+        self.clf  = nn.Linear(hidden_dim, num_classes)
+    
+    def forward(self, emb):
+
+        for layer in self.hidden_layers:
+            emb = layer(emb)
+
+        return self.clf(emb)

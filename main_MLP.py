@@ -1,7 +1,3 @@
-# CONCLUSIONS
-# - It overfits a lot! Without validation set it's complicated
-# - Underperforms RandomForest
-
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader

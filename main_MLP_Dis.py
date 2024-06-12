@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import os
 from misc import MLPDisentangleV4, SupervisedContrastiveLoss, normalizeFeatures, loadData, cumulate_EMA, evaluation
+from misc import sim_dist_specifc_loss_spc, sup_contra_Cplus2_classes
 import time
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, cohen_kappa_score
 import torch.nn.functional as F
@@ -13,27 +14,6 @@ import torch.nn.functional as F
 #warnings.filterwarnings('ignore')
 #torch.set_default_dtype(torch.float16)
 
-
-# 3C classes (C per domain + C for domain invariant)
-def sim_dist_specifc_loss_spc(spec_emb, ohe_label, ohe_dom, scl, epoch):
-    norm_spec_emb = nn.functional.normalize(spec_emb)
-    hash_label = {}
-    new_combined_label = []
-    for v1, v2 in zip(ohe_label, ohe_dom):
-        key = "%d_%d"%(v1,v2)
-        if key not in hash_label:
-            hash_label[key] = len(hash_label)
-        new_combined_label.append( hash_label[key] )
-    new_combined_label = torch.tensor(np.array(new_combined_label), dtype=torch.int64)
-    return scl(norm_spec_emb, new_combined_label, epoch=epoch)
-
-# C + 2 classes: C for domain invariant + source domain spec + target domain spec
-def sup_contra_Cplus2_classes(emb, ohe_label, ohe_dom, scl, epoch):
-    norm_emb = nn.functional.normalize(emb)
-    C = ohe_label.max() + 1
-    new_combined_label = [v1 if v2==2 else C+v2 for v1, v2 in zip(ohe_label, ohe_dom)]
-    new_combined_label = torch.tensor(np.array(new_combined_label), dtype=torch.int64)
-    return scl(norm_emb, new_combined_label, epoch=epoch)
 
 # ################################
 # Script main body

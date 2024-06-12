@@ -56,10 +56,10 @@ yp_p=LU22_test_prime[['pointid','Label_lev1_code','Label_lev2_code']]
 
 # Lev1
 X_train_p1= LU22_train_prime[f_prime.iloc[:,0]] #select prime important features
-y_train_p1= LU22_train_prime[['Label_lev1_code']]
+y_train_p1= LU22_train_prime['Label_lev1_code']
 
 X_test_p= LU22_test_prime[f_prime.iloc[:,0]] #select prime important features
-y_test_p= LU22_test_prime[['Label_lev1_code']]
+y_test_p= LU22_test_prime['Label_lev1_code']
 
 clfl_p1 = RandomForestClassifier(n_estimators=130, criterion='gini', max_depth= None, min_samples_leaf=2, max_features= 'sqrt' , oob_score=True)
 clfl_p1.fit(X_train_p1, y_train_p1)
@@ -117,10 +117,10 @@ yp_g=LU22_test_rem[['pointid','Label_lev1_code','Label_lev2_code']]
 
 # Lev1
 X_train_g1= LU22_train_gapfill[f_gapfill.iloc[:,0]] #select prime important features
-y_train_g1= LU22_train_gapfill[['Label_lev1_code']]
+y_train_g1= LU22_train_gapfill['Label_lev1_code']
 
 X_test_g= LU22_test_rem[f_gapfill.iloc[:,0]] #select prime important features
-y_test_g= LU22_test_rem[['Label_lev1_code']]
+y_test_g= LU22_test_rem['Label_lev1_code']
 
 clfl_g1 = RandomForestClassifier(n_estimators=110, criterion='gini', max_depth= None, min_samples_leaf=2, max_features= 'sqrt' , oob_score=True)
 clfl_g1.fit(X_train_g1, y_train_g1)
