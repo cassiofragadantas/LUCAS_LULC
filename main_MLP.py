@@ -70,9 +70,8 @@ train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=training_b
 test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 
 ######## Model training
-print('Training model...')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print(f'Running on {device}')
+print(f'Training model on {device}...')
 
 # Model
 model = MLP(n_classes)

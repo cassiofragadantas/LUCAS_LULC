@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-import sys
 from torch.utils.data import TensorDataset, DataLoader
+import time
+import os
+import sys
 import numpy as np
 import pandas as pd
-import os
 from misc import MLPDisentangleV4, SupervisedContrastiveLoss, normalizeFeatures, loadData, cumulate_EMA, evaluation
 from misc import sim_dist_specifc_loss_spc, sup_contra_Cplus2_classes
-import time
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, cohen_kappa_score
 import torch.nn.functional as F
 #import warnings
@@ -89,7 +89,7 @@ test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 
 ######## Model training
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print(f'Running on {device}')
+print(f'Training model on {device}...')
 
 # Model
 # 1) Random Forest (theirs)
