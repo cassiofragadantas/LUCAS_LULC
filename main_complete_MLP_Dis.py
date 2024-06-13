@@ -212,7 +212,7 @@ y_train_p1= LU22_train_prime['Label_lev1_code']
 X_test_p= LU22_test_prime[f_prime.iloc[:,0]] #select prime important features
 y_test_p= LU22_test_prime['Label_lev1_code']
 
-model_name = "model_MLP_p1_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+model_name = "model_MLPDis_p1_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
 y_pred_p1 = trainMLPDis(X_train_p1, y_train_p1, climate_train, X_test_p, epochs, model_name, device)
 
 yp_1=pd.DataFrame(y_pred_p1, columns=['Label_lev1_pred'])
@@ -234,7 +234,7 @@ climate_train = LU22_train_prime_2['climate'].copy()
 X_train_p2=LU22_train_prime_2[f_prime.iloc[:,0]]
 y_train_p2 = LU22_train_prime_2['Label_lev2_code']
 
-model_name = "model_MLP_p2_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+model_name = "model_MLPDis_p2_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
 y_pred_p2 = trainMLPDis(X_train_p2, y_train_p2, climate_train, X_test_p, epochs, model_name, device)
 
 yp_2=pd.DataFrame(y_pred_p2, columns=['Label_lev2_pred'])
@@ -271,7 +271,7 @@ y_train_g1= LU22_train_gapfill['Label_lev1_code']
 X_test_g= LU22_test_rem[f_gapfill.iloc[:,0]] #select prime important features
 y_test_g= LU22_test_rem['Label_lev1_code']
 
-model_name = "model_MLP_g1_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+model_name = "model_MLPDis_g1_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
 y_pred_g1 = trainMLPDis(X_train_g1, y_train_g1, climate_train, X_test_g, epochs, model_name)
 
 yp_1=pd.DataFrame(y_pred_g1, columns=['Label_lev1_pred'])
@@ -292,7 +292,7 @@ climate_train = LU22_train_gapfill_2['climate'].copy()
 X_train_g2=LU22_train_gapfill_2[f_gapfill.iloc[:,0]]
 y_train_g2 = LU22_train_gapfill_2['Label_lev2_code']
 
-model_name = "model_MLP_g2_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+model_name = "model_MLPDis_g2_" + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
 y_pred_g2 = trainMLPDis(X_train_g2, y_train_g2, climate_train, X_test_g, epochs, model_name)
 
 yp_2=pd.DataFrame(y_pred_g2, columns=['Label_lev2_pred'])

@@ -15,10 +15,6 @@ See results summary [here](https://docs.google.com/spreadsheets/d/168OG9ZMvTzcGD
 
 - Provide coordinates information (latitude, longitude) besides the ecoregion label information for the MLP model
 
-## TODO
-
-- Run on different train-test splits (take average and std)
-- Run the original two-stage full pipeline for MLP and compare performance.
 
 ## Files description
 
@@ -37,3 +33,8 @@ Other:
 - `misc.py`: contain some supporting functions including models definition.
 
 P.S.: The random seed currently does not affect data splitting (the same fixed split is being used).
+
+## TODO
+
+- Run on different train-test splits (take average and std)
+- Run the original two-stage full pipeline for MLP and compare performance.
