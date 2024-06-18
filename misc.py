@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 from torch.autograd import Function
@@ -42,6 +43,9 @@ def loadData(data_path, suffix='prime', pred_level=2):
     # Climate region
     climate_train = LU22_train['climate']
 
+    # Lat-Long encoding (inspired by Baudou2021 and Bellet2024 PhD Thesis)
+    geo_enc_train = positional_encoding(LU22_train)
+    geo_enc_test = positional_encoding(LU22_train)
 
     # Labels
     if pred_level == 1: # Lev1
@@ -68,7 +72,23 @@ def loadData(data_path, suffix='prime', pred_level=2):
     LU22_train= LU22_train[features.iloc[:,0]]
     LU22_test= LU22_test[features.iloc[:,0]]
 
-    return LU22_train.to_numpy(), y_train.to_numpy(), LU22_test.to_numpy(), y_test.to_numpy(), climate_train
+    return LU22_train.to_numpy(), y_train.to_numpy(), LU22_test.to_numpy(), y_test.to_numpy(), \
+            climate_train, geo_enc_train, geo_enc_test
+
+def positional_encoding(dataset):
+    d = 128
+    d_i=np.arange(0,int(d/4))
+    freq=1/(10000**(2*d_i/d))
+    x, y = dataset['long'], dataset['lat']
+    # x,y=x/10000,y/10000
+    geo_enc=np.zeros(d)
+    d2 = int(d/2)
+    geo_enc[0:d2:2]  = np.sin(x * freq)
+    geo_enc[1:d2:2]  = np.cos(x * freq)
+    geo_enc[d2::2]   = np.sin(y * freq)
+    geo_enc[d2+1::2] = np.cos(y * freq)
+
+    return geo_enc
 
 def cumulate_EMA(model, ema_weights, alpha):
     current_weights = OrderedDict()

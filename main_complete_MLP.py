@@ -7,9 +7,8 @@ import sys
 import numpy as np
 import pandas as pd
 from os.path import join
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, classification_report 
-from misc import MLP, normalizeFeatures, loadData, evaluation, cumulate_EMA
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, cohen_kappa_score, classification_report 
+from misc import MLP, normalizeFeatures
 
 
 data_path = '../LU22_final_shared/'

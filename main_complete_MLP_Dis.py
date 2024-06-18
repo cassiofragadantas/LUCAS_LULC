@@ -7,9 +7,8 @@ import sys
 import numpy as np
 import pandas as pd
 from os.path import join
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, classification_report 
-from misc import MLPDisentangleV4, SupervisedContrastiveLoss, normalizeFeatures, loadData, cumulate_EMA, evaluation
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, cohen_kappa_score, classification_report 
+from misc import MLPDisentangleV4, SupervisedContrastiveLoss, normalizeFeatures
 from misc import sim_dist_specifc_loss_spc, sup_contra_Cplus2_classes
 import torch.nn.functional as F
 
