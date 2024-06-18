@@ -25,7 +25,7 @@ rng_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
 # prime:  all features but cloud free samples only 
 # gapfill: all samples but cloud free features only
 suffix = sys.argv[3] if len(sys.argv) > 3 else 'prime' #'prime' or 'gapfill'
-epochs = int(sys.argv[4]) if len(sys.argv) > 4 else 100
+epochs = int(sys.argv[4]) if len(sys.argv) > 4 else 300
 training_batch_size = 128
 normalize_features = True
 use_valid = False # use validation dataset
