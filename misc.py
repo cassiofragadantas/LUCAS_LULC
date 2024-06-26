@@ -43,9 +43,10 @@ def loadData(data_path, suffix='prime', pred_level=2):
     # Climate region
     climate_train = LU22_train['climate']
 
-    # Lat-Long encoding (inspired by Baudou2021 and Bellet2024 PhD Thesis)
+    # Lat-Long encoding (inspired by Baudoux2021 and Bellet2024 PhD Thesis)
+    # see https://github.com/LBaudoux/Unet_LandCoverTranslator
     geo_enc_train = positional_encoding(LU22_train)
-    geo_enc_test = positional_encoding(LU22_train)
+    geo_enc_test = positional_encoding(LU22_test)
 
     # Labels
     if pred_level == 1: # Lev1
@@ -81,12 +82,13 @@ def positional_encoding(dataset):
     freq=1/(10000**(2*d_i/d))
     x, y = dataset['long'], dataset['lat']
     # x,y=x/10000,y/10000
-    geo_enc=np.zeros(d)
+    geo_enc=np.zeros((x.shape[0],d))
     d2 = int(d/2)
-    geo_enc[0:d2:2]  = np.sin(x * freq)
-    geo_enc[1:d2:2]  = np.cos(x * freq)
-    geo_enc[d2::2]   = np.sin(y * freq)
-    geo_enc[d2+1::2] = np.cos(y * freq)
+    geo_enc[:,0:d2:2]  = np.sin(np.outer(x, freq))
+    geo_enc[:,1:d2:2]  = np.cos(np.outer(x, freq))
+    geo_enc[:,d2::2]   = np.sin(np.outer(y, freq))
+    geo_enc[:,d2+1::2] = np.cos(np.outer(y, freq))
+    print(geo_enc.shape)
 
     return geo_enc
 
@@ -111,10 +113,14 @@ def evaluation(model, dataloader, device):
     with torch.no_grad():
         tot_pred = []
         tot_labels = []
-        for x_batch, y_batch in dataloader:
-            x_batch = x_batch.to(device)
-            y_batch = y_batch.to(device)
-            pred = model(x_batch)[0]
+        for data in dataloader:
+            x_batch = data[0].to(device)
+            y_batch = data[1].to(device)
+            if len(data) == 3: # coordinates are provided
+                coord = data[2].to(device)
+                pred = model(x_batch, coord)[0]
+            else:
+                pred = model(x_batch)[0]
             pred_npy = np.argmax(pred.cpu().detach().numpy(), axis=1)
             tot_pred.append( pred_npy )
             tot_labels.append( y_batch.cpu().detach().numpy())
@@ -122,6 +128,7 @@ def evaluation(model, dataloader, device):
         tot_labels = np.concatenate(tot_labels)
     
     return tot_pred, tot_labels
+
 
 # Supervised contrastive classes definition
 
@@ -213,8 +220,8 @@ class MLPDisentangleV4(torch.nn.Module):
     def __init__(self, num_classes=8):
         super(MLPDisentangleV4, self).__init__()
 
-        self.inv = MLP(num_classes=num_classes)
-        self.spec = MLP(num_classes=2)        
+        self.inv = MLP(out_dim=num_classes)
+        self.spec = MLP(out_dim=2)
 
     def forward(self, x):
         classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
@@ -222,8 +229,24 @@ class MLPDisentangleV4(torch.nn.Module):
         return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat
 
 
+class MLPDisentanglePos(torch.nn.Module):
+    def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True):
+        super(MLPDisentanglePos, self).__init__()
+
+        self.pos_enc = MLPpos(out_dim=pos_enc_dim, num_hidden_layers=1, act_out=act_out)
+        self.inv = MLP(out_dim=num_classes)
+        self.spec = MLP(out_dim=2)
+
+    def forward(self, x, coord):
+        pos_enc = self.pos_enc(coord)
+        x = torch.concat((x,pos_enc),dim=1)
+        classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
+        classif_spec, spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
+        return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat
+
+
 class MLP(nn.Module):
-    def __init__(self, num_classes, dropout_rate=0.5, hidden_dim=256):
+    def __init__(self, out_dim, dropout_rate=0.5, hidden_dim=256):
         super(MLP, self).__init__()
             
         self.flatten = nn.Flatten()
@@ -248,7 +271,7 @@ class MLP(nn.Module):
             nn.Dropout(dropout_rate)
         )
 
-        self.clf = nn.Linear(hidden_dim, num_classes)           
+        self.clf = nn.Linear(hidden_dim, out_dim)
 
 
     def forward(self, inputs):
@@ -257,6 +280,42 @@ class MLP(nn.Module):
         hidden_emb = self.layer2(emb) # OR: hidden_emb = emb
         out_emb = self.layer3(hidden_emb)
         return self.clf(out_emb), emb, hidden_emb, out_emb # No more intermediate features
+
+class MLPpos(nn.Module):
+    def __init__(self, out_dim, dropout_rate=0.5, num_hidden_layers=3, hidden_dim=256, act_out=False):
+        super(MLPpos, self).__init__()
+
+        self.flatten = nn.Flatten()
+
+        layers = []
+        layers.append(nn.Sequential(
+            nn.LazyLinear(hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate)
+        ))
+
+        for _ in range(num_hidden_layers - 1):
+            layers.append(nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout_rate)
+            ))
+
+        self.hidden_layers = nn.Sequential(*layers)
+
+        self.out = nn.Linear(hidden_dim, out_dim)
+        self.act_out = act_out
+
+    def forward(self, inputs):
+        emb = self.flatten(inputs)
+        for layer in self.hidden_layers:
+            emb = layer(emb)
+        out = self.out(emb)
+        if self.act_out:
+            out = torch.sigmoid(out)
+        return out
 
 
 ###########################################
