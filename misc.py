@@ -233,12 +233,12 @@ class MLPDisentanglePos(torch.nn.Module):
     def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True):
         super(MLPDisentanglePos, self).__init__()
 
-        self.pos_enc = MLPpos(out_dim=pos_enc_dim, num_hidden_layers=1, act_out=act_out)
+        self.pos_enc = MLP(out_dim=pos_enc_dim, num_hidden_layers=1, act_out=act_out)
         self.inv = MLP(out_dim=num_classes)
         self.spec = MLP(out_dim=2)
 
     def forward(self, x, coord):
-        pos_enc = self.pos_enc(coord)
+        pos_enc = self.pos_enc(coord)[0]
         x = torch.concat((x,pos_enc),dim=1)
         classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
         classif_spec, spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
@@ -246,44 +246,8 @@ class MLPDisentanglePos(torch.nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, out_dim, dropout_rate=0.5, hidden_dim=256):
-        super(MLP, self).__init__()
-            
-        self.flatten = nn.Flatten()
-        self.layer1 = nn.Sequential(
-            nn.LazyLinear(hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate)
-        )
-
-        self.layer2 = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate)
-        )
-
-        self.layer3 = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate)
-        )
-
-        self.clf = nn.Linear(hidden_dim, out_dim)
-
-
-    def forward(self, inputs):
-        inputs = self.flatten(inputs)
-        emb = self.layer1(inputs)
-        hidden_emb = self.layer2(emb) # OR: hidden_emb = emb
-        out_emb = self.layer3(hidden_emb)
-        return self.clf(out_emb), emb, hidden_emb, out_emb # No more intermediate features
-
-class MLPpos(nn.Module):
     def __init__(self, out_dim, dropout_rate=0.5, num_hidden_layers=3, hidden_dim=256, act_out=False):
-        super(MLPpos, self).__init__()
+        super(MLP, self).__init__()
 
         self.flatten = nn.Flatten()
 
@@ -310,12 +274,14 @@ class MLPpos(nn.Module):
 
     def forward(self, inputs):
         emb = self.flatten(inputs)
+        intermediate_outputs = []
         for layer in self.hidden_layers:
             emb = layer(emb)
+            intermediate_outputs.append(emb)
         out = self.out(emb)
         if self.act_out:
             out = torch.sigmoid(out)
-        return out
+        return (out, *intermediate_outputs)
 
 
 ###########################################
