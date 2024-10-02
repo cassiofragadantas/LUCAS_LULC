@@ -6,8 +6,8 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-from misc import MLP, normalizeFeatures, loadData, evaluation, cumulate_EMA
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, classification_report 
+from misc import MLP, normalizeFeatures, loadData, evaluation, cumulate_EMA, plot_confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, ConfusionMatrixDisplay
 
 
 # ################################
@@ -26,7 +26,8 @@ normalize_features = True
 use_valid = False # use validation dataset
 momentum_ema = .95
 data_path = '../LU22_final_shared/'
-model_name = "model_MLP_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed) + '.pth'
+config_details = "MLP_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
+model_name = "model_" + config_details + '.pth'
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
@@ -71,70 +72,74 @@ test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 
 ######## Model training
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print(f'Training model on {device}...')
-
 # Model
 model = MLP(n_classes)
 
-learning_rate = 0.0001
-loss_fn = nn.CrossEntropyLoss()
+if os.path.isfile(model_name):
+    print(f'Loading model weights (previously trained)...')
+    model.load_state_dict(torch.load(model_name,map_location=torch.device(device)))
+else:
+    print(f'Training model on {device}...')
 
-optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
+    learning_rate = 0.0001
+    loss_fn = nn.CrossEntropyLoss()
 
-ema_weights = None
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
-for epoch in range(epochs):
-    start = time.time()
-    model.train()
-    tot_loss, den = 0., 0.
-    
-    for x_batch, y_batch in train_dataloader:
-        x_batch = x_batch.to(device)
-        y_batch = y_batch.to(device)
+    ema_weights = None
 
-        optimizer.zero_grad()
-        pred = model(x_batch)[0]
-        loss = loss_fn(pred, y_batch)
-        loss.backward() # backward pass: backpropagate the prediction loss
-        optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
-        tot_loss+= loss.cpu().detach().numpy()
-        den+=1.
+    for epoch in range(epochs):
+        start = time.time()
+        model.train()
+        tot_loss, den = 0., 0.
+        
+        for x_batch, y_batch in train_dataloader:
+            x_batch = x_batch.to(device)
+            y_batch = y_batch.to(device)
 
-    end = time.time()
+            optimizer.zero_grad()
+            pred = model(x_batch)[0]
+            loss = loss_fn(pred, y_batch)
+            loss.backward() # backward pass: backpropagate the prediction loss
+            optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
+            tot_loss+= loss.cpu().detach().numpy()
+            den+=1.
 
-    # Evaluation
-    with torch.no_grad():
-        if use_valid:
-            pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
-            f1_val = f1_score(labels_valid, pred_valid, average="weighted")
-            
-            eval_test = (f1_val > valid_f1)
-            if f1_val > valid_f1:
+        end = time.time()
+
+        # Evaluation
+        with torch.no_grad():
+            if use_valid:
+                pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
+                f1_val = f1_score(labels_valid, pred_valid, average="weighted")
+                
+                eval_test = (f1_val > valid_f1)
+                if f1_val > valid_f1:
+                    torch.save(model.state_dict(), model_name)
+                    valid_f1 = f1_val
+            else:
                 torch.save(model.state_dict(), model_name)
-                valid_f1 = f1_val
-        else:
-            torch.save(model.state_dict(), model_name)
-            eval_test = (epoch%10 == 0)
+                eval_test = (epoch%10 == 0)
 
 
-        ####################### EMA #####################################
-        if epoch >= epochs/2:        
-            ema_weights = cumulate_EMA(model, ema_weights, momentum_ema)
-            # current_state_dict = model.state_dict()        
-            # model.load_state_dict(ema_weights)
-            # pred_test, labels_test = evaluation(model, test_dataloader, device)
-            # f1_ema = f1_score(labels_test, pred_test, average="weighted")
-            # model.load_state_dict(current_state_dict)
-        ####################### EMA #####################################
+            ####################### EMA #####################################
+            if epoch >= epochs/2:        
+                ema_weights = cumulate_EMA(model, ema_weights, momentum_ema)
+                # current_state_dict = model.state_dict()        
+                # model.load_state_dict(ema_weights)
+                # pred_test, labels_test = evaluation(model, test_dataloader, device)
+                # f1_ema = f1_score(labels_test, pred_test, average="weighted")
+                # model.load_state_dict(current_state_dict)
+            ####################### EMA #####################################
 
-        if eval_test:
-            pred_test, labels_test = evaluation(model, test_dataloader, device)
-            # acc = accuracy_score(labels_test, pred_test)
-            f1 = f1_score(labels_test, pred_test, average="weighted")
-            print("Epoch %d (%.2fs): train loss %.4f. F1 on TEST %.2f"%(epoch, (end-start), tot_loss/den, 100*f1))
-            #print(confusion_matrix(labels_test, pred_test))        
-        else:
-            print("Epoch %d (%.2fs): train loss %.4f"%(epoch, (end-start), tot_loss/den))
+            if eval_test:
+                pred_test, labels_test = evaluation(model, test_dataloader, device)
+                # acc = accuracy_score(labels_test, pred_test)
+                f1 = f1_score(labels_test, pred_test, average="weighted")
+                print("Epoch %d (%.2fs): train loss %.4f. F1 on TEST %.2f"%(epoch, (end-start), tot_loss/den, 100*f1))
+                #print(confusion_matrix(labels_test, pred_test))        
+            else:
+                print("Epoch %d (%.2fs): train loss %.4f"%(epoch, (end-start), tot_loss/den))
 
 
 ### Final assessment
@@ -148,11 +153,29 @@ print(f'>>> Scenario: Data {suffix}, Level {pred_level}')
 print(f'MLP TEST perf: Acc={acc*100:.2f}, F1={f1*100:.2f}')
 np.set_printoptions(precision=2)
 print(f'F1 per-class: {f1_perclass*100}')
-# print(confusion_matrix(labels_test, pred_test))
+
+# Confusion matrix
+conf_matrix = confusion_matrix(labels_test, pred_test)
+# save to csv
+cm_filename = "confusion_matrix_" + config_details
+df_conf_matrix = pd.DataFrame(conf_matrix)
+df_conf_matrix.to_csv(cm_filename + '.csv', index=False)
+# Plot
+text = True if pred_level==1 else False # Display values on each cell in confusion matrix
+cm_title = f'Confusion Matrix ({suffix}, level {pred_level})'
+plot_confusion_matrix(conf_matrix, title=cm_title, filename = cm_filename, text=text)
+# Plot normalized per-row
+conf_matrix = confusion_matrix(labels_test, pred_test, normalize='true')
+plot_confusion_matrix(conf_matrix, title=cm_title, filename = cm_filename + '_norm', normalized=True, text=text)
+
 
 ### Final assessment - EMA model
-model.load_state_dict(ema_weights)
-torch.save(model.state_dict(), 'EMA' + model_name)
+if os.path.isfile('EMA' + model_name):
+    print(f'Loading model weights (previously trained)...')
+    model.load_state_dict(torch.load('EMA' + model_name,map_location=torch.device(device)))
+else:
+    model.load_state_dict(ema_weights)
+    torch.save(model.state_dict(), 'EMA' + model_name)
 
 pred_test, labels_test = evaluation(model, test_dataloader, device)
 acc = accuracy_score(labels_test, pred_test)

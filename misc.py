@@ -6,6 +6,34 @@ import numpy as np
 import pandas as pd
 import os
 from collections import OrderedDict
+from matplotlib import pyplot as plt
+import itertools
+
+def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Oranges,
+                          filename = None, normalized = False, text = True):
+    plt.figure()
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(cm.shape[1])
+    plt.xticks(tick_marks, rotation=45)
+    ax = plt.gca()
+    ax.set_xticklabels((ax.get_xticks() +1).astype(str))
+    plt.yticks(tick_marks)
+
+    thresh = cm.max() / 2.
+    form = '.2f' if normalized else 'd'
+    if text:
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j], form),
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    if filename is not None:
+        plt.savefig(filename + '.png', dpi=300, bbox_inches='tight')
 
 def normalizeFeatures(data, feat_min=None, feat_max=None):
     # Normalize per feature min and max
