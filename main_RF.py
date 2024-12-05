@@ -6,6 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, ConfusionMatrixDisplay
 from misc import normalizeFeatures, loadData, plot_confusion_matrix
 import joblib
+import time
 
 
 # Input arguments
@@ -16,8 +17,8 @@ rng_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
 # gapfill: all samples but cloud free features only
 suffix = sys.argv[3] if len(sys.argv) > 3 else 'prime' #'prime' or 'gapfill'
 data_path = '../LU22_final_shared/'
-config_details = "RF_" + suffix + '_Lev' + str(pred_level) + '_seed' + str(rng_seed)"
-model_name = "model_" + config_details + '.pth'
+config_details = "RF_" + suffix + '_Lev' + str(pred_level) + '_seed' + str(rng_seed)
+model_name = "model_" + config_details + '.joblib'
 normalize_features = False
 
 print(f'(Random seed set to {rng_seed})')
@@ -46,6 +47,8 @@ if os.path.isfile(model_name):
     model = joblib.load(model_name)
 else:
     print('Training model...')
+    start_time = time.time()
+
     if suffix == 'prime':
         n_estimators=130 if pred_level==1 else 150
     else: # 'gapfill'
@@ -54,11 +57,17 @@ else:
     model = RandomForestClassifier(n_estimators=130, criterion='gini', max_depth= None, min_samples_leaf=2, max_features= 'sqrt' , oob_score=True)
     model.fit(train_data, train_label)
 
+    execution_time = time.time() - start_time
+    print(f"Training time: {execution_time:.6f} seconds")
+
     # save
     joblib.dump(model, model_name)
 
+### Inference
+start_time = time.time()
 y_pred = model.predict(test_data)
-
+execution_time = time.time() - start_time
+print(f"Inference time: {execution_time:.6f} seconds")
 
 ### Final assessment
 acc = accuracy_score(test_label, y_pred)

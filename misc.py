@@ -173,11 +173,12 @@ def sim_dist_specifc_loss_spc(spec_emb, ohe_label, ohe_dom, scl, epoch):
     new_combined_label = torch.tensor(np.array(new_combined_label), dtype=torch.int64)
     return scl(norm_spec_emb, new_combined_label, epoch=epoch)
 
-# C + 2 classes: C for domain invariant + source domain spec + target domain spec
+# C + D classes: C for domain invariant + 1 domain on domain spec embs
 def sup_contra_Cplus2_classes(emb, ohe_label, ohe_dom, scl, epoch):
     norm_emb = nn.functional.normalize(emb)
     C = ohe_label.max() + 1
-    new_combined_label = [v1 if v2==2 else C+v2 for v1, v2 in zip(ohe_label, ohe_dom)]
+    D = ohe_dom.max()
+    new_combined_label = [v1 if v2==D else C+v2 for v1, v2 in zip(ohe_label, ohe_dom)]
     new_combined_label = torch.tensor(np.array(new_combined_label), dtype=torch.int64)
     return scl(norm_emb, new_combined_label, epoch=epoch)
 
@@ -258,12 +259,12 @@ class MLPDisentangleV4(torch.nn.Module):
 
 
 class MLPDisentanglePos(torch.nn.Module):
-    def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True):
+    def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True, num_domains=2):
         super(MLPDisentanglePos, self).__init__()
 
         self.pos_enc = MLP(out_dim=pos_enc_dim, num_hidden_layers=1, act_out=act_out)
         self.inv = MLP(out_dim=num_classes)
-        self.spec = MLP(out_dim=2)
+        self.spec = MLP(out_dim=num_domains)
 
     def forward(self, x, coord):
         pos_enc = self.pos_enc(coord)[0]
