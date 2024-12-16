@@ -26,12 +26,15 @@ rng_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
 # gapfill: all samples but cloud free features only
 suffix = sys.argv[3] if len(sys.argv) > 3 else 'prime' #'prime' or 'gapfill'
 epochs = int(sys.argv[4]) if len(sys.argv) > 4 else 300
+loo_region = sys.argv[5] if len(sys.argv) > 5 else None # Held-out climatic region from 0 to 8. If 'None', the usual train-test split is used
+# Regions: ['Alpine' 'Atlantic' 'BlackSea' 'Boreal' 'Continental' 'Mediterranean', 'Pannonian' 'Steppic']
 training_batch_size = 128
 normalize_features = True
 use_valid = False # use validation dataset
 momentum_ema = .95
 data_path = '../LU22_final_shared/'
-config_details = "MLP_Dis_posEnc_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
+loo = '_LOO-' + loo_region if loo_region else ''
+config_details = "MLP_DisMulti_posEnc_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.pth'
 
 print(f'(Random seed set to {rng_seed})')
@@ -41,7 +44,7 @@ np.random.seed(rng_seed)
 ######## Data preparation
 print('Loading data...')
 train_data, train_label, test_data, test_label, \
-    climate_train, train_geo_enc, test_geo_enc = loadData(data_path, suffix, pred_level)
+    climate_train, train_geo_enc, test_geo_enc = loadData(data_path, suffix, pred_level, loo_region)
 
 # Normalize data
 if normalize_features:
