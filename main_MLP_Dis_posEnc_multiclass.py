@@ -62,7 +62,6 @@ train_geo_enc = train_geo_enc[valid_indices]
 # Separate by climate region
 climate_train = np.array(climate_train, dtype=str)
 unique_climates = np.unique(climate_train)
-print(f'climate regions: {unique_climates}')
 
 # Lists to hold separated datasets
 train_data_list = []

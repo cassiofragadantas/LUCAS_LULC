@@ -55,7 +55,7 @@ def normalizeFeaturesdf(df, df_min=None, df_max=None):
     numeric_cols = df.select_dtypes(include=[np.number]).columns
     df[numeric_cols] = (df[numeric_cols] - df[numeric_cols].min()) / (df[numeric_cols].max() - df[numeric_cols].min())
 
-def loadData(data_path, suffix='prime', pred_level=2):
+def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
     LU22_train=pd.read_csv(os.path.join(data_path,'LU22_final_train_' + suffix + '.csv'), sep=',')
     LU22_test= pd.read_csv(os.path.join(data_path, 'LU22_final_test_' + suffix + '.csv'), sep=',')
 
@@ -70,6 +70,7 @@ def loadData(data_path, suffix='prime', pred_level=2):
 
     # Climate region
     climate_train = LU22_train['climate']
+    climate_test = LU22_test['climate']
 
     # Lat-Long encoding (inspired by Baudoux2021 and Bellet2024 PhD Thesis)
     # see https://github.com/LBaudoux/Unet_LandCoverTranslator
@@ -100,6 +101,29 @@ def loadData(data_path, suffix='prime', pred_level=2):
     features= pd.read_csv(os.path.join(data_path,'LU22_imp_features_' + suffix + '.csv'), sep=',')
     LU22_train= LU22_train[features.iloc[:,0]]
     LU22_test= LU22_test[features.iloc[:,0]]
+
+    # Re-shuffle train-test split by selecting a held-out region for test
+    if loo_region is not None:
+        dataset_all = pd.concat([LU22_train, LU22_test], ignore_index=True)
+        y_all = pd.concat([y_train, y_test], ignore_index=True)
+        geo_enc_all = np.concatenate([geo_enc_train, geo_enc_test])
+        climate_all = np.concatenate([climate_train, climate_test])
+
+        # idx_climate = (climate_all == loo_region)
+        idx_climate = np.isin(climate_all, loo_region) # Get indexes for held-out climate zone (could be more than one)
+        
+        LU22_train, LU22_test = dataset_all[~idx_climate], dataset_all[idx_climate]
+        y_train, y_test = y_all[~idx_climate], y_all[idx_climate]
+        geo_enc_train, geo_enc_test = geo_enc_all[~idx_climate], geo_enc_all[idx_climate]
+        climate_train, climate_test = climate_all[~idx_climate], climate_all[idx_climate]
+
+    # Print train and test set distribution per climate region
+    unique_climates, counts_climate = np.unique(np.array(climate_train, dtype=str), return_counts=True)
+    print(f'Climate regions train: {unique_climates}')
+    print(f'Samples per climate region train: {counts_climate}')
+    unique_climates, counts_climate = np.unique(np.array(climate_test, dtype=str), return_counts=True)
+    print(f'Climate regions test: {unique_climates}')
+    print(f'Samples per climate region test: {counts_climate}')
 
     return LU22_train.to_numpy(), y_train.to_numpy(), LU22_test.to_numpy(), y_test.to_numpy(), \
             climate_train, geo_enc_train, geo_enc_test

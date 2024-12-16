@@ -16,9 +16,12 @@ rng_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
 # gapfill: all samples but cloud free features only
 suffix = sys.argv[3] if len(sys.argv) > 3 else 'prime' #'prime' or 'gapfill'
 epochs = int(sys.argv[4]) if len(sys.argv) > 4 else 100
+loo_region = sys.argv[5] if len(sys.argv) > 5 else None # Held-out climatic region from 0 to 8. If 'None', the usual train-test split is used
+# Regions: ['Alpine' 'Atlantic' 'BlackSea' 'Boreal' 'Continental' 'Mediterranean', 'Pannonian' 'Steppic']
 normalize_features = True
 data_path = '../LU22_final_shared/'
-config_details = "XGBoost_" + suffix + '_Lev' + str(pred_level) + '_seed' + str(rng_seed)
+loo = '_LOO-' + loo_region if loo_region else ''
+config_details = "XGBoost_" + suffix + loo + '_Lev' + str(pred_level) + '_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.json'
 
 print(f'(Random seed set to {rng_seed})')
@@ -27,7 +30,7 @@ np.random.seed(rng_seed)
 
 ######## Load data
 print('Loading data...')
-train_data, train_label, test_data, test_label, _,_,_ = loadData(data_path, suffix, pred_level)
+train_data, train_label, test_data, test_label, _,_,_ = loadData(data_path, suffix, pred_level, loo_region)
 
 # Normalize data
 if normalize_features:
