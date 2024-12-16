@@ -26,8 +26,8 @@ rng_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
 # gapfill: all samples but cloud free features only
 suffix = sys.argv[3] if len(sys.argv) > 3 else 'prime' #'prime' or 'gapfill'
 epochs = int(sys.argv[4]) if len(sys.argv) > 4 else 300
-loo_region = sys.argv[5] if len(sys.argv) > 5 else None # Held-out climatic region from 0 to 8. If 'None', the usual train-test split is used
-# Regions: ['Alpine' 'Atlantic' 'BlackSea' 'Boreal' 'Continental' 'Mediterranean', 'Pannonian' 'Steppic']
+loo_region = sys.argv[5] if len(sys.argv) > 5 else None # Held-out climatic region (see options below). If 'None', the usual train-test split is used
+# Regions: ['Alpine' 'Atlantic' 'BlackSea' 'Boreal' 'Continental' 'Mediterranean' 'Pannonian' 'Steppic']
 training_batch_size = 128
 normalize_features = True
 use_valid = False # use validation dataset
