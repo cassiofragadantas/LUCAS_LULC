@@ -1,4 +1,4 @@
-EPOCHS=300
+EPOCHS=500
 for DATA in prime gapfill
 do
 	for LEVEL in 1 2
