@@ -187,7 +187,7 @@ f1 = f1_score(labels_test, pred_test, average='weighted')
 f1_perclass = f1_score(labels_test, pred_test, average=None)
 
 print('\n--- EMA model assessment ---')
-print(f'MLP+dis TEST perf: Acc={acc*100:.2f}, F1={f1*100:.2f}')
+print(f'MLP TEST perf: Acc={acc*100:.2f}, F1={f1*100:.2f}')
 np.set_printoptions(precision=2)
 print(f'F1 per-class: {f1_perclass*100}')
 
