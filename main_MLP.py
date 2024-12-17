@@ -76,7 +76,7 @@ test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 ######## Model training
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Model
-model = MLP(n_classes)
+model = MLP(n_classes).to(device)
 
 if os.path.isfile(model_name):
     print(f'Loading model weights (previously trained)...')
