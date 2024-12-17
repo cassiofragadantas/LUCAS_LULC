@@ -270,11 +270,11 @@ class SupervisedContrastiveLoss(nn.Module):
 
 
 class MLPDisentangleV4(torch.nn.Module):
-    def __init__(self, num_classes=8):
+    def __init__(self, num_classes=8, num_domains=2):
         super(MLPDisentangleV4, self).__init__()
 
         self.inv = MLP(out_dim=num_classes)
-        self.spec = MLP(out_dim=2)
+        self.spec = MLP(out_dim=num_domains)
 
     def forward(self, x):
         classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
