@@ -11,17 +11,17 @@ rng_seed = 0
 climate_regions = ['Alpine', 'Atlantic', 'BlackSea', 'Boreal', 'Continental', 'Mediterranean', 'Pannonian', 'Steppic']
 training_batch_size = 128
 data_path = '../LU22_final_shared/'
-model_type = "RF" # "MLP" "MLP_Dis_posEnc" "MLP_DisMulti_posEnc" "RF" "XGBoost" "SVM"
+model_type = "MLP_Dis_posEnc" # "MLP" "MLP_Dis_posEnc" "MLP_DisMulti_posEnc" "RF" "XGBoost" "SVM"
 model_path = f'./results/LOO/{model_type}/'
 
 normalize_features = False if model_type == "RF" else True
-epochs = 300
+epochs = 500
 epochs_str = '_' + str(epochs) + 'ep' if model_type.startswith("MLP") else ''
 if model_type in ["RF", "SVM"]:
     extension = '.joblib' 
 elif model_type == "XGBoost":
     extension = ".json"
-else 
+else: 
     extension = ".pth"
 
 for suffix in ['prime', 'gapfill']:
@@ -36,7 +36,7 @@ for suffix in ['prime', 'gapfill']:
 
             ######## Data preparation
             print('Loading data...')
-            train_data, train_label, test_data, test_label, _,_,_ = loadData(data_path, suffix, pred_level, loo_region)
+            train_data, train_label, test_data, test_label, _, _, test_geo_enc = loadData(data_path, suffix, pred_level, loo_region)
 
             # Normalize data
             if normalize_features:
@@ -53,7 +53,11 @@ for suffix in ['prime', 'gapfill']:
             x_test = torch.tensor(test_data, dtype=torch.float32)
             y_test = torch.tensor(test_label, dtype=torch.int64)
 
-            test_dataset = TensorDataset(x_test, y_test)
+            if "posEnc" in model_type:
+                coord_test = torch.tensor(test_geo_enc, dtype=torch.float32)
+                test_dataset = TensorDataset(x_test, y_test, coord_test)
+            else:
+                test_dataset = TensorDataset(x_test, y_test)
             test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
