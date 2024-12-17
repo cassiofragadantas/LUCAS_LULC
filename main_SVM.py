@@ -71,8 +71,6 @@ y_pred = model.predict(test_data)
 execution_time = time.time() - start_time
 print(f"Inference time: {execution_time:.6f} seconds")
 
-print(f'y_pred: {y_pred}')#TODO delete
-print(f'unique(y_pred): {y_pred}')#TODO delete
 
 ### Final assessment
 acc = accuracy_score(test_label, y_pred)
