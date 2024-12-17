@@ -34,7 +34,7 @@ use_valid = False # use validation dataset
 momentum_ema = .95
 data_path = '../LU22_final_shared/'
 loo = '_LOO-' + loo_region if loo_region else ''
-config_details = "MLP_DisMulti_posEnc_" + suffix + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
+config_details = "MLP_DisMulti_posEnc_" + suffix + loo + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.pth'
 
 print(f'(Random seed set to {rng_seed})')
