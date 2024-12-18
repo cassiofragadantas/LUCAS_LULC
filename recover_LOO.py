@@ -4,6 +4,9 @@ import numpy as np
 from misc import MLP, MLPDisentanglePos, normalizeFeatures, loadData, evaluation
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score
 import joblib
+import sys
+import xgboost as xgb
+from sklearn.svm import SVC
 
 # ################################
 # Script main body
@@ -11,7 +14,7 @@ rng_seed = 0
 climate_regions = ['Alpine', 'Atlantic', 'BlackSea', 'Boreal', 'Continental', 'Mediterranean', 'Pannonian', 'Steppic']
 training_batch_size = 128
 data_path = '../LU22_final_shared/'
-model_type = "MLP_Dis_posEnc" # "MLP" "MLP_Dis_posEnc" "MLP_DisMulti_posEnc" "RF" "XGBoost" "SVM"
+model_type = sys.argv[1] if len(sys.argv) > 1 else "RF" # "MLP" "MLP_Dis_posEnc" "MLP_DisMulti_posEnc" "RF" "XGBoost" "SVM"
 model_path = f'./results/LOO/{model_type}/'
 
 normalize_features = False if model_type == "RF" else True
