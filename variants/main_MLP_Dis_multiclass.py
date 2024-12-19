@@ -151,7 +151,6 @@ else:
             x_batch = x_batch.to(device)
             y_batch = y_batch.to(device)
             dom_batch = dom_batch.to(device)
-            coord_batch = coord_batch.to(device)
             optimizer.zero_grad()
             pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat = model(x_batch)
 
