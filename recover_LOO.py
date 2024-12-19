@@ -1,10 +1,11 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
-from misc import MLP, MLPDisentanglePos, normalizeFeatures, loadData, evaluation
+from misc import MLP, MLPDisentanglePos, MLPDisentangleV4, normalizeFeatures, loadData, evaluation
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score
 import joblib
 import sys
+import pandas as pd
 import xgboost as xgb
 from sklearn.svm import SVC
 
@@ -39,7 +40,7 @@ for suffix in ['prime', 'gapfill']:
 
             ######## Data preparation
             print('Loading data...')
-            train_data, train_label, test_data, test_label, _, _, test_geo_enc = loadData(data_path, suffix, pred_level, loo_region)
+            train_data, train_label, test_data, test_label, climate_train, _, test_geo_enc = loadData(data_path, suffix, pred_level, loo_region)
 
             # Normalize data
             if normalize_features:
@@ -47,6 +48,10 @@ for suffix in ['prime', 'gapfill']:
                 test_data, _, _ = normalizeFeatures(test_data, feat_min, feat_max)
 
             n_classes = len(np.unique(train_label))
+
+            # Remove NaN climate regions and count number of regions in training data
+            valid_indices = ~pd.isna(climate_train)  # Use pandas to handle NaN
+            n_domains = len(np.unique(np.array(climate_train[valid_indices], dtype=str)))
 
             print(f'train_data shape: {train_data.shape}')
             print(f'train_label shape: {train_label.shape}')
@@ -73,6 +78,8 @@ for suffix in ['prime', 'gapfill']:
                 model = MLPDisentanglePos(n_classes).to(device)
             elif model_type == "MLP_DisMulti_posEnc":
                 model = MLPDisentanglePos(n_classes,num_domains=n_domains).to(device)
+            elif model_type == "MLP_DisMulti":
+                model = MLPDisentangleV4(n_classes,num_domains=n_domains).to(device)
             elif model_type in ["RF", "SVM"]:
                 model = joblib.load(model_path + model_name)
                 pred_test = model.predict(test_data)
