@@ -74,6 +74,8 @@ for suffix in ['prime', 'gapfill']:
             print(f'Loading model weights (previously trained)...')
             if model_type == "MLP":
                 model = MLP(n_classes).to(device)
+            elif model_type == "MLP_posEnc":
+                model = MLPDisentanglePos(n_classes).to(device)
             elif model_type == "MLP_Dis_posEnc":
                 model = MLPDisentanglePos(n_classes).to(device)
             elif model_type == "MLP_DisMulti_posEnc":
