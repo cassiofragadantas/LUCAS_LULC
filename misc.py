@@ -298,6 +298,28 @@ class MLPDisentanglePos(torch.nn.Module):
         return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat
 
 
+class MLPDisentanglePosDANN(torch.nn.Module):
+    def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True, num_domains=2, discr_nb_hidden=0):
+        super(MLPDisentanglePosDANN, self).__init__()
+
+        self.pos_enc = MLP(out_dim=pos_enc_dim, num_hidden_layers=1, act_out=act_out)
+        self.inv = MLPenc()
+        self.clf_task = FC_Classifier(num_classes=num_classes)
+        self.spec = MLPenc()
+        self.clf_dom = FC_Classifier(num_classes=num_domains)
+        self.discr = FC_Classifier(num_classes=num_domains,num_hidden_layers=discr_nb_hidden)
+
+    def forward(self, x, coord):
+        pos_enc = self.pos_enc(coord)[0]
+        x = torch.concat((x,pos_enc),dim=1)
+        inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
+        classif = self.clf_task(inv_fc_feat)
+        spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
+        classif_spec = self.clf_dom(spec_fc_feat)
+        classif_discr = self.discr(grad_reverse(inv_fc_feat))
+        return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, classif_discr
+
+
 class MLP(nn.Module):
     def __init__(self, out_dim, dropout_rate=0.5, num_hidden_layers=3, hidden_dim=256, act_out=False):
         super(MLP, self).__init__()
