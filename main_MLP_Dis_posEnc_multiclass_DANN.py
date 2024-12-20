@@ -248,7 +248,7 @@ else:
                 print("Epoch %d (%.2fs): train loss %.4f, contrastive %.4f, dann %.4f. F1 on TEST %.2f"%(epoch, (end-start), tot_loss/den, contra_tot_loss/den,  dann_tot_loss/den, 100*f1))
                 #print(confusion_matrix(labels_test, pred_test))        
             else:
-                print("Epoch %d (%.2fs): train loss %.4f, contrastive %.4f"%(epoch, (end-start), tot_loss/den, contra_tot_loss/den, dann_tot_loss/den))
+                print("Epoch %d (%.2fs): train loss %.4f, contrastive %.4f, dann %.4f"%(epoch, (end-start), tot_loss/den, contra_tot_loss/den, dann_tot_loss/den))
         
             sys.stdout.flush()
 
