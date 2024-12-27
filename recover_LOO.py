@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
-from misc import MLP, MLPDisentanglePos, MLPDisentangleV4, normalizeFeatures, loadData, evaluation
+from misc import MLP, MLPDisentanglePos, MLPDisentanglePosDANN, MLPDisentangleV4, normalizeFeatures, loadData, evaluation
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score
 import joblib
 import sys
@@ -82,6 +82,8 @@ for suffix in ['prime', 'gapfill']:
                 model = MLPDisentanglePos(n_classes,num_domains=n_domains).to(device)
             elif model_type == "MLP_DisMulti":
                 model = MLPDisentangleV4(n_classes,num_domains=n_domains).to(device)
+            elif model_type == "MLP_DisMultiDANN_posEnc":
+                model = MLPDisentanglePosDANN(n_classes,num_domains=n_domains).to(device)
             elif model_type in ["RF", "SVM"]:
                 model = joblib.load(model_path + model_name)
                 pred_test = model.predict(test_data)
