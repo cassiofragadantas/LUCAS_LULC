@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from misc import MLP, normalizeFeatures, loadData, evaluation, cumulate_EMA, plot_confusion_matrix
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, ConfusionMatrixDisplay
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
 # ################################
@@ -31,6 +32,8 @@ data_path = '../LU22_final_shared/'
 loo = '_LOO-' + loo_region if loo_region else ''
 config_details = "MLP_" + suffix + loo + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.pth'
+
+scheduler = True
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
@@ -89,6 +92,9 @@ else:
 
     optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
+    if scheduler:
+        scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=0)
+
     ema_weights = None
 
     for epoch in range(epochs):
@@ -107,6 +113,9 @@ else:
             optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
             tot_loss+= loss.cpu().detach().numpy()
             den+=1.
+
+        if scheduler:
+            scheduler.step()
 
         end = time.time()
 

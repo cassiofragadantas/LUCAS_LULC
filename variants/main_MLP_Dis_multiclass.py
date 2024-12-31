@@ -10,6 +10,7 @@ from misc import MLPDisentangleV4, SupervisedContrastiveLoss, normalizeFeatures,
 from misc import sim_dist_specifc_loss_spc, sup_contra_Cplus2_classes, plot_confusion_matrix
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, cohen_kappa_score, ConfusionMatrixDisplay
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import CosineAnnealingLR
 #import warnings
 #warnings.filterwarnings('ignore')
 #torch.set_default_dtype(torch.float16)
@@ -36,6 +37,8 @@ data_path = '../LU22_final_shared/'
 loo = '_LOO-' + loo_region if loo_region else ''
 config_details = "MLP_DisMulti_" + suffix + loo + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.pth'
+
+scheduler = True
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
@@ -134,6 +137,9 @@ else:
 
     optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
+    if scheduler:
+        scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=0) 
+
     ema_weights = None
 
     for epoch in range(epochs):
@@ -194,6 +200,9 @@ else:
             tot_loss+= loss.cpu().detach().numpy()
             contra_tot_loss+= contra_loss.cpu().detach().numpy()
             den+=1.
+
+        if scheduler:
+            scheduler.step()
 
         end = time.time()
 
