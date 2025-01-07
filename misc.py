@@ -81,15 +81,20 @@ def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
     if pred_level == 1: # Lev1
         y_train= LU22_train['Label_lev1_code'].copy()
         y_test= LU22_test['Label_lev1_code'].copy()
+        y_train_name= LU22_train['Label_lev1_name'].copy()
+        y_test_name= LU22_test['Label_lev1_name'].copy()        
     else: # Lev2 
         y_train= LU22_train['Label_lev2_code'].copy()
-        y_test= LU22_test['Label_lev2_code'].copy() 
+        y_test= LU22_test['Label_lev2_code'].copy()
+        y_train_name= LU22_train['Label_lev2_name'].copy()
+        y_test_name= LU22_test['Label_lev2_name'].copy()        
     # Map labels from 0 to n_classes-1
     label_mapping = dict()
     for k, label in enumerate(y_train.unique()):
         y_train[y_train==label] = k
         y_test[y_test==label] = k
         label_mapping[k] = label
+        print(f'Class ID/code/name: {k} / {label_mapping[k]} / {y_train_name[y_train==k].unique()}')
     print(f'Label mapping: {label_mapping}')
     # Class counts
     _, counts_train = np.unique(y_train, return_counts=True)
