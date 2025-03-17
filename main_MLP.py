@@ -41,16 +41,15 @@ np.random.seed(rng_seed)
 
 ######## Data preparation
 print('Loading data...')
-train_data, train_label, test_data, test_label, _,_,_ = loadData(data_path, suffix, pred_level, loo_region)
+train_data, train_label, test_data, test_label, _,_,_,_,_,_ = loadData(data_path, suffix, pred_level, loo_region)
 
 # Normalize data
 if normalize_features:
     train_data, feat_min, feat_max = normalizeFeatures(train_data)
+    np.savez(f'feat_norm_Lev{pred_level}_{suffix}.npz',min_val=feat_min, max_val=feat_max)
     test_data, _, _ = normalizeFeatures(test_data, feat_min, feat_max)
-
 # valid_data =  # Could be part of the traning dataset
 # valid_label = 
-
 
 n_classes = len(np.unique(train_label))
 

@@ -77,6 +77,10 @@ def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
     geo_enc_train = positional_encoding(LU22_train)
     geo_enc_test = positional_encoding(LU22_test)
 
+    lat_long_train = np.stack((LU22_train['lat'], LU22_train['long']), axis=1)
+    lat_long_test = np.stack((LU22_test['lat'], LU22_test['long']), axis=1)
+
+
     # Labels
     if pred_level == 1: # Lev1
         y_train= LU22_train['Label_lev1_code'].copy()
@@ -94,7 +98,7 @@ def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
         y_train[y_train==label] = k
         y_test[y_test==label] = k
         label_mapping[k] = label
-        print(f'Class ID/code/name: {k} / {label_mapping[k]} / {y_train_name[y_train==k].unique()}')
+        print(f'Class ID, code, name: {k}, {label_mapping[k]}, {y_train_name[y_train==k].unique()}')
     print(f'Label mapping: {label_mapping}')
     # Class counts
     _, counts_train = np.unique(y_train, return_counts=True)
@@ -113,6 +117,7 @@ def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
         y_all = pd.concat([y_train, y_test], ignore_index=True)
         geo_enc_all = np.concatenate([geo_enc_train, geo_enc_test])
         climate_all = np.concatenate([climate_train, climate_test])
+        lat_long_all = np.concatenate([lat_long_train, lat_long_test])
 
         # idx_climate = (climate_all == loo_region)
         idx_climate = np.isin(climate_all, loo_region) # Get indexes for held-out climate zone (could be more than one)
@@ -121,6 +126,7 @@ def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
         y_train, y_test = y_all[~idx_climate], y_all[idx_climate]
         geo_enc_train, geo_enc_test = geo_enc_all[~idx_climate], geo_enc_all[idx_climate]
         climate_train, climate_test = climate_all[~idx_climate], climate_all[idx_climate]
+        lat_long_train, lat_long_test = lat_long_all[~idx_climate], lat_long_all[idx_climate]
 
     # Print train and test set distribution per climate region
     unique_climates, counts_climate = np.unique(np.array(climate_train, dtype=str), return_counts=True)
@@ -131,7 +137,7 @@ def loadData(data_path, suffix='prime', pred_level=2, loo_region=None):
     print(f'Samples per climate region test: {counts_climate}')
 
     return LU22_train.to_numpy(), y_train.to_numpy(), LU22_test.to_numpy(), y_test.to_numpy(), \
-            climate_train, geo_enc_train, geo_enc_test
+            climate_train, climate_test, geo_enc_train, geo_enc_test, lat_long_train, lat_long_test
 
 def positional_encoding(dataset):
     d = 128
@@ -145,7 +151,7 @@ def positional_encoding(dataset):
     geo_enc[:,1:d2:2]  = np.cos(np.outer(x, freq))
     geo_enc[:,d2::2]   = np.sin(np.outer(y, freq))
     geo_enc[:,d2+1::2] = np.cos(np.outer(y, freq))
-    print(geo_enc.shape)
+    # print(geo_enc.shape)
 
     return geo_enc
 
@@ -300,7 +306,7 @@ class MLPDisentanglePos(torch.nn.Module):
         x = torch.concat((x,pos_enc),dim=1)
         classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
         classif_spec, spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
-        return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat
+        return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, pos_enc
 
 
 class MLPDisentanglePosDANN(torch.nn.Module):

@@ -40,7 +40,7 @@ np.random.seed(rng_seed)
 ######## Data preparation
 print('Loading data...')
 train_data, train_label, test_data, test_label, \
-    climate_train, _, _ = loadData(data_path, suffix, pred_level)
+    climate_train, _, _, _, _, _ = loadData(data_path, suffix, pred_level)
 
 # Normalize data
 if normalize_features:

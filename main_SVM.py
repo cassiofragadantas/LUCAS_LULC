@@ -30,7 +30,7 @@ np.random.seed(rng_seed)
 
 ######## Load data
 print('Loading data...')
-train_data, train_label, test_data, test_label, _,_,_ = loadData(data_path, suffix, pred_level, loo_region)
+train_data, train_label, test_data, test_label, _,_,_,_,_,_ = loadData(data_path, suffix, pred_level, loo_region)
 
 # Normalize data
 if normalize_features:

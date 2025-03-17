@@ -40,7 +40,7 @@ for suffix in ['prime', 'gapfill']:
 
             ######## Data preparation
             print('Loading data...')
-            train_data, train_label, test_data, test_label, climate_train, _, test_geo_enc = loadData(data_path, suffix, pred_level, loo_region)
+            train_data, train_label, test_data, test_label, climate_train, _, _, test_geo_enc, _, _ = loadData(data_path, suffix, pred_level, loo_region)
 
             # Normalize data
             if normalize_features:
