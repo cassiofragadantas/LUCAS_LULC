@@ -38,7 +38,7 @@ loo = '_LOO-' + loo_region if loo_region else ''
 config_details = "MLP_DisMulti_posEncFixed_" + suffix + loo + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.pth'
 
-scheduler = True
+scheduler = False
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
@@ -167,7 +167,7 @@ else:
             dom_batch = dom_batch.to(device)
             coord_batch = coord_batch.to(device)
             optimizer.zero_grad()
-            pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat = model(x_batch, coord_batch)
+            pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, _ = model(x_batch, coord_batch)
 
             ##### DOMAIN CLASSIFICATION #####
             loss_ce_spec_dom = loss_fn(spec_d_pred, dom_batch)

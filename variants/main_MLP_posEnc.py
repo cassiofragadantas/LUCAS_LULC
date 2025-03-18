@@ -148,7 +148,7 @@ else:
             dom_batch = dom_batch.to(device)
             coord_batch = coord_batch.to(device)
             optimizer.zero_grad()
-            pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat = model(x_batch, coord_batch)
+            pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, _ = model(x_batch, coord_batch)
 
             ohe_label = F.one_hot(y_batch,num_classes=n_classes).cpu().detach().numpy()
             ohe_dom = F.one_hot(dom_batch,num_classes=2).cpu().detach().numpy()
