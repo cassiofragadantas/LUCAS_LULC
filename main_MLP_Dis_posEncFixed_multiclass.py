@@ -38,7 +38,7 @@ loo = '_LOO-' + loo_region if loo_region else ''
 config_details = "MLP_DisMulti_posEncFixed_" + suffix + loo + '_Lev' + str(pred_level) + '_' + str(epochs) + 'ep_seed' + str(rng_seed)
 model_name = "model_" + config_details + '.pth'
 
-scheduler = False
+scheduler = True
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
