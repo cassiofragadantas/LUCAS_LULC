@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
-from misc import MLP, MLPDisentanglePos, MLPDisentanglePosDANN, MLPDisentangleV4, normalizeFeatures, loadData, evaluation
+from misc import MLP, MLPDisentanglePos, MLPDisentanglePosFixed, MLPDisentanglePosDANN, MLPDisentangleV4, normalizeFeatures, loadData, evaluation
 from sklearn.metrics import accuracy_score, f1_score, cohen_kappa_score
 import joblib
 import sys
@@ -28,7 +28,7 @@ elif model_type == "XGBoost":
 else: 
     extension = ".pth"
 
-for suffix in ['prime', 'gapfill']:
+for suffix in ['gapfill']: #['prime', 'gapfill']:
     for pred_level in [1, 2]:
         acc_allLOO, F1_allLOO, acc_allLOO_EMA, F1_allLOO_EMA = [], [], [], []
 
@@ -74,10 +74,14 @@ for suffix in ['prime', 'gapfill']:
             print(f'Loading model weights (previously trained)...')
             if model_type == "MLP":
                 model = MLP(n_classes).to(device)
+            elif model_type == "MLP_posEncFixed":
+                model = MLPDisentanglePosFixed(n_classes).to(device)
             elif model_type == "MLP_posEnc":
                 model = MLPDisentanglePos(n_classes).to(device)
             elif model_type == "MLP_Dis_posEnc":
                 model = MLPDisentanglePos(n_classes).to(device)
+            elif model_type == "MLP_DisMulti_posEncFixed":
+                model = MLPDisentanglePosFixed(n_classes, num_domains=n_domains).to(device)
             elif model_type == "MLP_DisMulti_posEnc":
                 model = MLPDisentanglePos(n_classes,num_domains=n_domains).to(device)
             elif model_type == "MLP_DisMulti":
