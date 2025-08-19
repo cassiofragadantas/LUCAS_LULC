@@ -17,8 +17,6 @@ def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Oranges,
     plt.colorbar()
     tick_marks = np.arange(cm.shape[1])
     plt.xticks(tick_marks, rotation=45)
-    ax = plt.gca()
-    ax.set_xticklabels((ax.get_xticks() +1).astype(str))
     plt.yticks(tick_marks)
 
     thresh = cm.max() / 2.
