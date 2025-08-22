@@ -8,6 +8,8 @@ import sys
 import pandas as pd
 import xgboost as xgb
 from sklearn.svm import SVC
+from tab_transformer_pytorch import TabTransformer, FTTransformer # $ pip install tab-transformer-pytorch
+from misc import evaluation_categ
 
 # ################################
 # Script main body
@@ -20,7 +22,7 @@ model_path = f'./results/LOO/{model_type}/'
 
 normalize_features = False if model_type == "RF" else True
 epochs = 500
-epochs_str = '_' + str(epochs) + 'ep' if model_type.startswith("MLP") else ''
+epochs_str = '_' + str(epochs) + 'ep' if model_type.startswith("MLP") or model_type in ['TabTransf', 'FTTransf'] else ''
 if model_type in ["RF", "SVM"]:
     extension = '.joblib' 
 elif model_type == "XGBoost":
@@ -97,10 +99,23 @@ for suffix in ['gapfill']: #['prime', 'gapfill']:
                 model.load_model(model_path + model_name)
                 dtest = xgb.DMatrix(test_data)
                 pred_test = model.predict(dtest)
-            
+            elif model_type == "FTTransf":
+                model = FTTransformer(categories = (), num_continuous = x_test.shape[1],
+                                       dim = 32, dim_out = n_classes, depth = 6, heads = 8,
+                                       attn_dropout = 0.1, ff_dropout = 0.1).to(device)
+            elif model_type == "TabTransf":
+                model = TabTransformer(categories = (), num_continuous = x_test.shape[1],
+                                       dim = 32, dim_out = n_classes, depth = 6, heads = 8,
+                                       attn_dropout = 0.1, ff_dropout = 0.1).to(device)
+
             if model_type.startswith('MLP'):
                 model.load_state_dict(torch.load(model_path + model_name,map_location=torch.device(device)))
                 pred_test, labels_test = evaluation(model, test_dataloader, device)
+
+            if model_type in ['TabTransf', 'FTTransf']:
+                model.load_state_dict(torch.load(model_path + model_name,map_location=torch.device(device)))
+                pred_test, labels_test = evaluation_categ(model, test_dataloader, device)
+
 
             acc = accuracy_score(test_label, pred_test)
             kappa=cohen_kappa_score(test_label, pred_test)
@@ -133,5 +148,12 @@ for suffix in ['gapfill']: #['prime', 'gapfill']:
             print('\n--- EMA model assessment ---')
             print(f'Acc LOO: {np.array2string(np.array(acc_allLOO_EMA)*100, separator=", ")}')
             print(f'F1 LOO: {np.array2string(np.array(F1_allLOO_EMA)*100, separator=", ")}')
+
+        # Model size
+        if model_type.startswith("MLP") or model_type in ['TabTransf', 'FTTransf']:
+            total_params = sum(p.numel() for p in model.parameters())
+            trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+            print(f"Total parameters: {total_params}")
+            print(f"Trainable parameters: {trainable_params}")
 
         print('\n\n\n')
