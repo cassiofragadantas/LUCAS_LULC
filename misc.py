@@ -190,7 +190,27 @@ def evaluation(model, dataloader, device):
     
     return tot_pred, tot_labels
 
+def evaluation_categ(model, dataloader, device):
+    model.eval()
+    with torch.no_grad():
+        tot_pred = []
+        tot_labels = []
+        for data in dataloader:
+            x_batch = data[0].to(device)
+            y_batch = data[1].to(device)
+            if len(data) == 3: # x_categ is provided
+                x_categ = data[2].to(device)
+            else: # create empty x_categ
+                x_categ = torch.empty(x_batch.size(0), 0, dtype=torch.long, device=x_batch.device)
 
+            pred = model(x_categ, x_batch)            
+            pred_npy = np.argmax(pred.cpu().detach().numpy(), axis=1)
+            tot_pred.append( pred_npy )
+            tot_labels.append( y_batch.cpu().detach().numpy())
+        tot_pred = np.concatenate(tot_pred)
+        tot_labels = np.concatenate(tot_labels)
+    
+    return tot_pred, tot_labels
 # Supervised contrastive classes definition
 
 # 3C classes (C per domain + C for domain invariant)

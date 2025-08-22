@@ -11,25 +11,8 @@ from tab_transformer_pytorch import TabTransformer # $ pip install tab-transform
 from misc import normalizeFeatures, loadData, cumulate_EMA, plot_confusion_matrix
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, ConfusionMatrixDisplay
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from misc import evaluation_categ
 
-def evaluation(model, dataloader, device):
-    model.eval()
-    with torch.no_grad():
-        tot_pred = []
-        tot_labels = []
-        for data in dataloader:
-            x_batch = data[0].to(device)
-            y_batch = data[1].to(device)
-            x_categ_empty = torch.empty(x_batch.size(0), 0, dtype=torch.long, device=x_batch.device)
-
-            pred = model(x_categ_empty, x_batch)            
-            pred_npy = np.argmax(pred.cpu().detach().numpy(), axis=1)
-            tot_pred.append( pred_npy )
-            tot_labels.append( y_batch.cpu().detach().numpy())
-        tot_pred = np.concatenate(tot_pred)
-        tot_labels = np.concatenate(tot_labels)
-    
-    return tot_pred, tot_labels
 
 # ################################
 # Script main body
@@ -151,7 +134,7 @@ else:
         # Evaluation
         with torch.no_grad():
             if use_valid:
-                pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
+                pred_valid, labels_valid = evaluation_categ(model, valid_dataloader, device)
                 f1_val = f1_score(labels_valid, pred_valid, average="weighted")
                 
                 eval_test = (f1_val > valid_f1)
@@ -168,13 +151,13 @@ else:
                 ema_weights = cumulate_EMA(model, ema_weights, momentum_ema)
                 # current_state_dict = model.state_dict()        
                 # model.load_state_dict(ema_weights)
-                # pred_test, labels_test = evaluation(model, test_dataloader, device)
+                # pred_test, labels_test = evaluation_categ(model, test_dataloader, device)
                 # f1_ema = f1_score(labels_test, pred_test, average="weighted")
                 # model.load_state_dict(current_state_dict)
             ####################### EMA #####################################
 
             if eval_test:
-                pred_test, labels_test = evaluation(model, test_dataloader, device)
+                pred_test, labels_test = evaluation_categ(model, test_dataloader, device)
                 # acc = accuracy_score(labels_test, pred_test)
                 f1 = f1_score(labels_test, pred_test, average="weighted")
                 print("Epoch %d (%.2fs): train loss %.4f. F1 on TEST %.2f"%(epoch, (end-start), tot_loss/den, 100*f1))
@@ -185,7 +168,7 @@ else:
 
 ### Final assessment
 start_time = time.time()
-pred_test, labels_test = evaluation(model, test_dataloader, device)
+pred_test, labels_test = evaluation_categ(model, test_dataloader, device)
 execution_time = time.time() - start_time
 print(f"Inference time: {execution_time:.6f} seconds")
 acc = accuracy_score(labels_test, pred_test)
@@ -221,7 +204,7 @@ else:
     model.load_state_dict(ema_weights)
     torch.save(model.state_dict(), 'EMA' + model_name)
 
-pred_test, labels_test = evaluation(model, test_dataloader, device)
+pred_test, labels_test = evaluation_categ(model, test_dataloader, device)
 acc = accuracy_score(labels_test, pred_test)
 kappa=cohen_kappa_score(labels_test, pred_test)
 f1 = f1_score(labels_test, pred_test, average='weighted')
