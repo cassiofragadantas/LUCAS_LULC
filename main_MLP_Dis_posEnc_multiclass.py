@@ -167,7 +167,7 @@ else:
             dom_batch = dom_batch.to(device)
             coord_batch = coord_batch.to(device)
             optimizer.zero_grad()
-            pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, _ = model(x_batch, coord_batch)
+            pred, spec_d_pred, inv_fc_feat, spec_fc_feat, _ = model(x_batch, coord_batch)
 
             ##### DOMAIN CLASSIFICATION #####
             loss_ce_spec_dom = loss_fn(spec_d_pred, dom_batch)
@@ -188,11 +188,11 @@ else:
 
             dom_mix_labels = np.concatenate([inv_dom_labels, spec_dc_dom_labels],axis=0)
             
-            joint_embedding = torch.concat([inv_emb, spec_emb_d])
-            mixdl_loss_supContraLoss = sim_dist_specifc_loss_spc(joint_embedding, y_mix_labels, dom_mix_labels, scl, epoch)
+            # joint_embedding = torch.concat([inv_emb, spec_emb_d])
+            # mixdl_loss_supContraLoss = sim_dist_specifc_loss_spc(joint_embedding, y_mix_labels, dom_mix_labels, scl, epoch)
             
-            joint_embedding_n1 = torch.concat([inv_emb_n1, spec_emb_n1])
-            mixdl_loss_supContraLoss_n1 = sim_dist_specifc_loss_spc(joint_embedding_n1, y_mix_labels, dom_mix_labels, scl, epoch)
+            # joint_embedding_n1 = torch.concat([inv_emb_n1, spec_emb_n1])
+            # mixdl_loss_supContraLoss_n1 = sim_dist_specifc_loss_spc(joint_embedding_n1, y_mix_labels, dom_mix_labels, scl, epoch)
 
             joint_embedding_fc_feat = torch.concat([inv_fc_feat, spec_fc_feat])
             # mixdl_loss_supContraLoss_fc = sim_dist_specifc_loss_spc(joint_embedding_fc_feat, y_mix_labels, dom_mix_labels, scl, epoch)

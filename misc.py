@@ -312,19 +312,22 @@ class MLPDisentangleV4(torch.nn.Module):
 
 
 class MLPDisentanglePos(torch.nn.Module):
-    def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True, num_domains=2):
+    def __init__(self, num_classes=8, pos_enc_dim=128, act_out=True, num_domains=2,
+                 dropout_rate=0.5, num_hidden_layers=3, hidden_dim=256):
         super(MLPDisentanglePos, self).__init__()
 
         self.pos_enc = MLP(out_dim=pos_enc_dim, num_hidden_layers=1, act_out=act_out)
-        self.inv = MLP(out_dim=num_classes)
-        self.spec = MLP(out_dim=num_domains)
+        self.inv = MLP(out_dim=num_classes, dropout_rate=dropout_rate, num_hidden_layers=num_hidden_layers, hidden_dim=hidden_dim)
+        self.spec = MLP(out_dim=num_domains, dropout_rate=dropout_rate, num_hidden_layers=num_hidden_layers, hidden_dim=hidden_dim)
 
     def forward(self, x, coord):
         pos_enc = self.pos_enc(coord)[0]
         x = torch.concat((x,pos_enc),dim=1)
-        classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
-        classif_spec, spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
-        return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat, pos_enc
+        inv = self.inv(x)
+        classif, inv_fc_feat = inv[0], inv[-1] # inv_emb, inv_emb_n1 = inv[1], inv[2]
+        spec = self.spec(x)
+        classif_spec, spec_fc_feat = spec[0], spec[-1] # spec_emb, spec_emb_n1 = spec[1], spec[2]
+        return classif, classif_spec, inv_fc_feat, spec_fc_feat, pos_enc
 
 class MLPDisentanglePosFixed(torch.nn.Module): # Closed-form positional encoding (no learning)
     def __init__(self, num_classes=8, num_domains=2):
