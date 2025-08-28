@@ -65,6 +65,11 @@ else:
     # save
     joblib.dump(model, model_name)
 
+### Model parameter count
+n_support, d = model.support_vectors_.shape
+total_params = model.support_vectors_.size + model.dual_coef_.size + model.intercept_.size
+print("SVM (RBF) parameter count:", total_params)
+
 ### Inference
 start_time = time.time()
 y_pred = model.predict(test_data)

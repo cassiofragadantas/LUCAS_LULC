@@ -235,7 +235,11 @@ else:
         
             sys.stdout.flush()
 
-
+### Model parameter count
+total_params = sum(p.numel() for p in model.parameters())
+total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(f"\nTotal Model Params: {total_params}")
+print(f"Total Model Trainable Params: {total_trainable_params}\n")
 
 ### Final assessment
 pred_test, labels_test = evaluation(model, test_dataloader, device)

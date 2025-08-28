@@ -251,10 +251,17 @@ else:
         
             sys.stdout.flush()
 
-
+### Model parameter count
+total_params = sum(p.numel() for p in model.parameters())
+total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(f"\nTotal Model Params: {total_params}")
+print(f"Total Model Trainable Params: {total_trainable_params}\n")
 
 ### Final assessment
+start_time = time.time()
 pred_test, labels_test = evaluation(model, test_dataloader, device)
+execution_time = time.time() - start_time
+print(f"Inference time: {execution_time:.6f} seconds")
 acc = accuracy_score(labels_test, pred_test)
 kappa=cohen_kappa_score(labels_test, pred_test)
 f1 = f1_score(labels_test, pred_test, average='weighted')

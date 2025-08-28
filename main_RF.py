@@ -66,6 +66,14 @@ else:
     # save
     joblib.dump(model, model_name)
 
+### Model parameter count
+total_params = sum(tree.tree_.node_count for tree in model.estimators_) * 5 # https://stackoverflow.com/questions/51139875/sklearn-randomforestregressor-number-of-trainable-parameters
+total_trainable_params = sum(tree.tree_.node_count for tree in model.estimators_) * 2 # feature and threshold
+# total_trainable_params = sum(tree.tree_.capacity - tree.tree_.n_leaves for tree in model.estimators_) * 2 \
+                        #  + sum(tree.tree_.n_leaves for tree in model.estimators_) # Leaves only have one parameter
+print(f"\nTotal Model Params: {total_params}")
+print(f"Total Model Trainable Params: {total_trainable_params}\n")
+
 ### Inference
 start_time = time.time()
 y_pred = model.predict(test_data)
