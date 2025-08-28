@@ -6,33 +6,33 @@ import xgboost as xgb
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score, ConfusionMatrixDisplay
 from misc import normalizeFeatures, loadData, plot_confusion_matrix
 import time
+import json
 
-def count_xgb_parameters(model):
+def count_xgb_parameters(booster):
     """
-    Count the number of parameters in a trained XGBClassifier model.
+    Count the number of parameters in a trained XGBoost Booster object.
     Parameters counted:
-    - feature index + threshold per internal node
-    - leaf value per leaf node
+    - 2 per internal node (feature index + threshold)
+    - 1 per leaf node (leaf value)
     """
-    booster = model.get_booster()
-    trees = booster.get_dump(dump_format="json")  # list of trees in JSON format
-    
+    # booster = model.get_booster()
+    trees = booster.get_dump(dump_format="json")
     total_params = 0
+    
     for tree_json in trees:
-        import json
         tree = json.loads(tree_json)
         
         # recursive traversal
         def count_nodes(node):
             if "leaf" in node:   # leaf node
-                return 1  # one parameter: leaf value
+                return 1
             else:                # split node
                 return 2 + count_nodes(node["children"][0]) + count_nodes(node["children"][1])
-                # 2 params: feature index + threshold
         
         total_params += count_nodes(tree)
     
     return total_params
+
 
 # Input arguments
 pred_level = int(sys.argv[1]) if len(sys.argv) > 1 else 2
