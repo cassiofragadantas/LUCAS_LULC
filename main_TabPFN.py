@@ -96,11 +96,17 @@ else:
     if pred_level == 1:
         save_fitted_tabpfn_model(model, model_name)
 
+### Model parameter count
+total_params = sum(p.numel() for p in model.model_.parameters())
+total_trainable_params = sum(p.numel() for p in model.model_.parameters() if p.requires_grad)
+print(f"\nTotal Model Params: {total_params}")
+print(f"Total Model Trainable Params: {total_trainable_params}\n")
+
 ### Inference
 start_time = time.time()
 # y_pred = model.predict(test_data)
 # Inference per batch
-batch_size = 5000 # test_data.shape[0]
+batch_size = 100 if pred_level==1 else 5000 # test_data.shape[0]
 n_test = test_data.shape[0]
 y_pred = []
 for start in range(0, n_test, batch_size):
