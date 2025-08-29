@@ -42,21 +42,24 @@ if normalize_features:
 n_classes = len(np.unique(train_label))
 
 # Subsampling datasets
-# n_samples = 5000
-# train_data, _, train_label, _ = train_test_split(
-#     train_data,
-#     train_label,
-#     train_size=n_samples,
-#     stratify=train_label,
-#     random_state=42
-# )
-# test_data, _, test_label, _ = train_test_split(
-#     test_data,
-#     test_label,
-#     train_size=n_samples,
-#     stratify=test_label,
-#     random_state=42
-# )
+if loo_region:
+    n_samples = 50000
+    if train_data.shape[0] > n_samples:
+        train_data, _, train_label, _ = train_test_split(
+            train_data,
+            train_label,
+            train_size= n_samples,
+            stratify=train_label,
+            random_state=42
+        )
+    # if test_data.shape[0] > n_samples + n_classes:        
+    #     test_data, _, test_label, _ = train_test_split(
+    #         test_data,
+    #         test_label,
+    #         train_size= n_samples,
+    #         stratify=test_label,
+    #         random_state=42
+    #     )
 
 print(f'train_data shape: {train_data.shape}')
 print(f'train_label shape: {train_label.shape}')
@@ -97,26 +100,26 @@ else:
         save_fitted_tabpfn_model(model, model_name)
 
 ### Model parameter count
-total_params = sum(p.numel() for p in model.model_.parameters())
-total_trainable_params = sum(p.numel() for p in model.model_.parameters() if p.requires_grad)
-print(f"\nTotal Model Params: {total_params}")
-print(f"Total Model Trainable Params: {total_trainable_params}\n")
+if pred_level==1:
+    total_params = sum(p.numel() for p in model.model_.parameters())
+    total_trainable_params = sum(p.numel() for p in model.model_.parameters() if p.requires_grad)
+    print(f"\nTotal Model Params: {total_params}")
+    print(f"Total Model Trainable Params: {total_trainable_params}\n")
 
 ### Inference
 start_time = time.time()
 # y_pred = model.predict(test_data)
 # Inference per batch
-batch_size = 100 if pred_level==1 else 5000 # test_data.shape[0]
+batch_size = 1000 if pred_level==1 else 5000 # test_data.shape[0]
 n_test = test_data.shape[0]
 y_pred = []
 for start in range(0, n_test, batch_size):
     end = min(start + batch_size, n_test)
     print(f'Inference until sample {end} out of {n_test}')    
     y_pred.append(model.predict(test_data[start:end]))
+    execution_time = time.time() - start_time
+    print(f"Inference time (until now): {execution_time:.6f} seconds")    
 y_pred = np.concatenate(y_pred, axis=0)
-
-execution_time = time.time() - start_time
-print(f"Inference time: {execution_time:.6f} seconds")
 
 ### Final assessment
 acc = accuracy_score(test_label, y_pred)
